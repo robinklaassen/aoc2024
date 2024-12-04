@@ -1,3 +1,4 @@
+"""I built the Grid2D class with methods for today's puzzle, but only after I finished it."""
 from directions import DiagonalDirection, ALL_DIRECTIONS
 from utils import read_input, lines_as_dict
 
