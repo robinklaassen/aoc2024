@@ -159,8 +159,8 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 
-# Ignore all txt files because they are personalized inputs
-*.txt
+# Ignore all input.txt files since they are personalized
+input.txt
 
 # Ignore html output (sigma graphs)
 *.html
