@@ -6,6 +6,8 @@ from typing import Self
 from directions import Direction, StraightDirection
 from utils import read_input
 
+type Position = tuple[int, int]
+
 
 class Grid2D(UserDict[tuple[int, int], str]):
     """An Advent of Code favorite. Indexed by (x, y) from top left."""
@@ -24,6 +26,13 @@ class Grid2D(UserDict[tuple[int, int], str]):
             max(self.keys(), key=itemgetter(0))[0] + 1,
             max(self.keys(), key=itemgetter(1))[1] + 1,
         )
+
+    @property
+    def unique_chars(self) -> set[str]:
+        return set(self.values())
+
+    def get_positions(self, char: str) -> list[Position]:
+        return [p for p, c in self.items() if c == char]
 
     def concat_in_direction(self, x_start: int, y_start: int, length: int, direction: Direction) -> str:
         output = ""
