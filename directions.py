@@ -30,6 +30,13 @@ TURN_RIGHT = {
     StraightDirection.LEFT: StraightDirection.UP,
 }
 
+REVERSE_DIRECTION = {
+    StraightDirection.UP: StraightDirection.DOWN,
+    StraightDirection.DOWN: StraightDirection.UP,
+    StraightDirection.LEFT: StraightDirection.RIGHT,
+    StraightDirection.RIGHT: StraightDirection.LEFT,
+}
+
 
 def translate_position(pos: tuple[int, int], direction: Direction, steps: int = 1) -> tuple[int, int]:
     return (

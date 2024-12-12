@@ -2,7 +2,7 @@ from functools import cached_property
 
 import networkx as nx
 
-from directions import StraightDirection, translate_position
+from directions import StraightDirection, translate_position, TURN_RIGHT, REVERSE_DIRECTION
 from grid import Grid2D, Position
 from utils import read_input
 
@@ -27,15 +27,27 @@ class GardenGrid(Grid2D):
         return graph
 
 
-def get_perimeter_length(region: set[Position]) -> int:
-    perimeter = 0
+def get_perimeters(region: set[Position]) -> set[tuple[int, int, StraightDirection]]:
+    perimeters = set()
     for pos in region:
         for direction in StraightDirection:
             neighbor = translate_position(pos, direction)
             if neighbor not in region:
-                perimeter += 1
+                perimeters.add((*pos, direction))
+    return perimeters
 
-    return perimeter
+
+def count_sides(region: set[Position]) -> int:
+    # if the perimeter has a neighbor to the right, discount it
+    perimeters = get_perimeters(region)
+    discount = 0
+    for i, j, d in perimeters:
+        d_right = TURN_RIGHT[d]
+        right_pos = translate_position((i, j), d_right)
+        if (*right_pos, d) in perimeters:
+            discount += 1
+
+    return len(perimeters) - discount
 
 
 def part1(lines: list[str]) -> int:
@@ -43,14 +55,22 @@ def part1(lines: list[str]) -> int:
     total_price = 0
     for region in nx.connected_components(grid.graph):
         region = set(region)
-        price = len(region) * get_perimeter_length(region)
+        perimeters = get_perimeters(region)
+        price = len(region) * len(perimeters)
         total_price += price
 
     return total_price
 
 
 def part2(lines: list[str]) -> int:
-    ...
+    grid = GardenGrid.from_lines(lines)
+    total_price = 0
+    for region in nx.connected_components(grid.graph):
+        region = set(region)
+        price = len(region) * count_sides(region)
+        total_price += price
+
+    return total_price
 
 
 if __name__ == "__main__":
