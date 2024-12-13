@@ -8,7 +8,7 @@ def read_input(filepath: Path | str = "input.txt") -> list[str]:
     return lines
 
 
-def generate_grids(lines: list[str], sep="") -> Iterator[list[str]]:
+def generate_sections(lines: list[str], sep="") -> Iterator[list[str]]:
     grid = []
     for line in lines:
         if line == sep:

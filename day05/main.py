@@ -5,14 +5,14 @@ from math import floor
 import networkx as nx
 from ipysigma import Sigma
 
-from utils import read_input, generate_grids
+from utils import read_input, generate_sections
 
 type RuleSet = list[tuple[int, int]]
 type Update = list[int]
 
 
 def process_input(lines: list[str]) -> tuple[RuleSet, list[Update]]:
-    sections = list(generate_grids(lines))
+    sections = list(generate_sections(lines))
     rules = list()
 
     for line in sections[0]:
