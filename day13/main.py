@@ -23,17 +23,37 @@ def win_prize(btn_a, btn_b, prize) -> int | None:
 
     return min(coins) if coins else None
 
+
 def win_prize_smarter(btn_a, btn_b, prize) -> int | None:
-    # no it's not lcm...
-    x_lcm = math.lcm(btn_a[0], btn_b[0])
+    ax, ay = btn_a
+    bx, by = btn_b
+    px, py = prize
+
+    from sympy import solve
+    from sympy.abc import a, b
+
+    solutions = solve(
+        [
+            ax * a + bx * b - px,
+            ay * a + by * b - py,
+        ],
+        [a, b],
+        dict=True,
+    )
+
+    assert len(solutions) == 1
+    sol = solutions[0]
+
+    if not sol[a].is_integer or not sol[b].is_integer:
+        return None
+
+    return 3 * sol[a] + sol[b]
 
 
 def part1(lines: list[str]) -> int:
     total_spent = 0
     for section in generate_sections(lines):
-        btn_a = extract_button(section[0])
-        btn_b = extract_button(section[1])
-        prize = extract_button(section[2])
+        btn_a, btn_b, prize = (extract_button(section[i]) for i in range(3))
 
         coins = win_prize(btn_a, btn_b, prize)
         if coins is not None:
@@ -45,9 +65,7 @@ def part1(lines: list[str]) -> int:
 def part2(lines: list[str]) -> int:
     total_spent = 0
     for section in generate_sections(lines):
-        btn_a = extract_button(section[0])
-        btn_b = extract_button(section[1])
-        prize = extract_button(section[2])
+        btn_a, btn_b, prize = (extract_button(section[i]) for i in range(3))
 
         higher_prize = (10000000000000 + prize[0], 10000000000000 + prize[1])
         coins = win_prize_smarter(btn_a, btn_b, higher_prize)
@@ -64,5 +82,4 @@ if __name__ == "__main__":
     input_lines = read_input()
     print(part1(input_lines))
 
-    # assert part2(test_lines) == TEST_ANSWER_PART2
     print(part2(input_lines))
