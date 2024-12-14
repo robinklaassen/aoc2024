@@ -164,3 +164,6 @@ input.txt
 
 # Ignore html output (sigma graphs)
 *.html
+
+# Ignore png output
+*.png
