@@ -48,52 +48,111 @@ class WarehouseGrid(Grid2D):
 
 class ExtendedWarehouseGrid(WarehouseGrid):
 
-    def box_can_move(self, left_pos: Position, direction: StraightDirection) -> bool:
-        pl = translate_position(left_pos, direction)
-        right_pos = translate_position(left_pos, StraightDirection.RIGHT)
-        pr = translate_position(right_pos, direction)
-        if self[pl] == "#" or self[pr] == "#":
-            return False
+    def boxes_to_move_horizontal(self, box: Position, direction: StraightDirection) -> set[Position]:
+        # we use only the left side of the box as position indicator
+        match direction:
+            case StraightDirection.LEFT:
+                new_pos = translate_position(box, StraightDirection.LEFT, 1)
+            case StraightDirection.RIGHT:
+                new_pos = translate_position(box, StraightDirection.RIGHT, 2)
+            case _:
+                raise Exception
 
-        ...
+        if self[new_pos] == "#":
+            return set()
+        if self[new_pos] == ".":
+            return {box}
+
+        if self[new_pos] == "[":
+            pass
+            # new_pos = new_pos
+        elif self[new_pos] == "]":
+            new_pos = translate_position(new_pos, StraightDirection.LEFT)
+        else:
+            raise Exception
+
+        extra_boxes = self.boxes_to_move_horizontal(new_pos, direction)
+        if not extra_boxes:
+            return set()
+
+        return extra_boxes.union({box})
+
+    def boxes_to_move_vertical(self, box: Position, direction: StraightDirection) -> set[Position]:
+        new_pos_left = translate_position(box, direction)
+        new_pos_right = translate_position(new_pos_left, StraightDirection.RIGHT)
+        chars = self[new_pos_left] + self[new_pos_right]
+
+        if "#" in chars:
+            return set()  # wall
+
+        match chars:
+            case "..":
+                return {box}
+            case "].":
+                new_pos = translate_position(new_pos_left, StraightDirection.LEFT)
+                extra_boxes = self.boxes_to_move_vertical(new_pos, direction)
+            case ".[":
+                extra_boxes = self.boxes_to_move_vertical(new_pos_right, direction)
+            case "[]":
+                extra_boxes = self.boxes_to_move_vertical(new_pos_left, direction)
+            case "][":
+                new_pos = translate_position(new_pos_left, StraightDirection.LEFT)
+                extra_boxes_left = self.boxes_to_move_vertical(new_pos, direction)
+                extra_boxes_right = self.boxes_to_move_vertical(new_pos_right, direction)
+                if not extra_boxes_left or not extra_boxes_right:
+                    return set()  # either or both cannot extra's cannot move, so current box cannot move either
+                extra_boxes = extra_boxes_left.union(extra_boxes_right)
+            case _:
+                raise ValueError
+
+        if not extra_boxes:
+            return set()
+
+        return extra_boxes.union({box})
 
     def parse_movements(self, movements: str):
         for m in movements:
             d = StraightDirection.from_char(m)
             p = self.robot_pos
-            boxes_to_move: set[tuple[Position, Position]] = set()
-            while True:
-                p = translate_position(p, d)
-                if self[p] == "#":
-                    # wall, nothing happens
-                    break
-                elif self[p] == "[":
-                    p_right = translate_position(p, StraightDirection.RIGHT)
-                    boxes_to_move.add((p, p_right))
-                elif self[p] == "]":
-                    p_left = translate_position(p, StraightDirection.LEFT)
-                    boxes_to_move.add((p_left, p))
-                elif self[p] == ".":
-                    # move boxes
-                    new_lefts = []
-                    new_rights = []
-                    for left, right in boxes_to_move:
-                        new_lefts.append(translate_position(left, d))
-                        new_rights.append(translate_position(right, d))
-                        self[left] = "."
-                        self[right] = "."
+            target_pos = translate_position(p, d)
+            if self[target_pos] == "#":
+                # wall, do nothing
+                continue
 
-                    for l in new_lefts:
-                        self[l] = "["
+            if self[target_pos] == ".":
+                # no box, only move robot
+                self.robot_pos = target_pos
+                continue
 
-                    for r in new_rights:
-                        self[r] = "]"
+            # there is a box part in the target position of the robot
+            if self[target_pos] == "[":
+                box_pos = target_pos
+            elif self[target_pos] == "]":
+                box_pos = translate_position(target_pos, StraightDirection.LEFT)
+            else:
+                raise Exception
 
-                    # move robot
-                    self.robot_pos = translate_position(self.robot_pos, d)
+            if d in [StraightDirection.LEFT, StraightDirection.RIGHT]:
+                boxes_to_move = self.boxes_to_move_horizontal(box_pos, d)
+            else:
+                boxes_to_move = self.boxes_to_move_vertical(box_pos, d)
 
-                    # don't do anything else!
-                    break
+            if not boxes_to_move:
+                # boxes cannot move, do nothing
+                continue
+
+            # boxes can move, so do it
+            new_box_positions = {translate_position(box, d) for box in boxes_to_move}
+            for box in boxes_to_move:
+                self[box] = "."
+                self[translate_position(box, StraightDirection.RIGHT)] = "."
+
+            for box in new_box_positions:
+                self[box] = "["
+                self[translate_position(box, StraightDirection.RIGHT)] = "]"
+
+            # also move robot!
+            self.robot_pos = target_pos
 
     @property
     def boxes_gps_sum(self) -> int:
@@ -135,13 +194,9 @@ def part2(lines: list[str]) -> int:
     sections = list(generate_sections(lines))
     extended_lines = extend_grid(sections[0])
     grid = ExtendedWarehouseGrid.from_lines(extended_lines)
+
     movements = "".join(line for line in sections[1])
-
-    grid.print()
-    print("***")
     grid.parse_movements(movements)
-    grid.print()
-
     return grid.boxes_gps_sum
 
 
