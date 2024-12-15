@@ -1,6 +1,7 @@
 """Direction constant enums from a topleft zero perspective"""
 
 from enum import Enum
+from typing import Self
 
 
 class Direction(Enum):
@@ -12,6 +13,20 @@ class StraightDirection(Direction):
     DOWN = (0, 1)
     LEFT = (-1, 0)
     RIGHT = (1, 0)
+
+    @classmethod
+    def from_char(cls, char: chr) -> Self:
+        match char:
+            case "^":
+                return cls.UP
+            case "v":
+                return cls.DOWN
+            case "<":
+                return cls.LEFT
+            case ">":
+                return cls.RIGHT
+            case _:
+                raise ValueError(f"Invalid direction symbol: {char}")
 
 
 class DiagonalDirection(Direction):

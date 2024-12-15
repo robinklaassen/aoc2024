@@ -34,6 +34,11 @@ class Grid2D(UserDict[tuple[int, int], str]):
     def get_positions(self, char: str) -> list[Position]:
         return [p for p, c in self.items() if c == char]
 
+    def print(self):
+        xsize, ysize = self.size
+        for y in range(ysize):
+            print("".join(self[x, y] for x in range(xsize)))
+
     def concat_in_direction(self, x_start: int, y_start: int, length: int, direction: Direction) -> str:
         output = ""
         for s in range(length):
