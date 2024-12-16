@@ -1,11 +1,15 @@
 """Direction constant enums from a topleft zero perspective"""
 
 from enum import Enum
+from functools import total_ordering
 from typing import Self
 
-
+@total_ordering
 class Direction(Enum):
     pass
+
+    def __lt__(self, other):
+        return self.value < other.value
 
 
 class StraightDirection(Direction):
@@ -37,6 +41,13 @@ class DiagonalDirection(Direction):
 
 
 ALL_DIRECTIONS: list[Direction] = list(StraightDirection) + list(DiagonalDirection)
+
+TURN_LEFT = {
+    StraightDirection.UP: StraightDirection.LEFT,
+    StraightDirection.RIGHT: StraightDirection.UP,
+    StraightDirection.DOWN: StraightDirection.RIGHT,
+    StraightDirection.LEFT: StraightDirection.DOWN,
+}
 
 TURN_RIGHT = {
     StraightDirection.UP: StraightDirection.RIGHT,
