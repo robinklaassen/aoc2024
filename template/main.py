@@ -15,9 +15,11 @@ def part2(lines: list[str]) -> int:
 if __name__ == "__main__":
     test_lines = read_input("test_input.txt")
     assert part1(test_lines) == TEST_ANSWER_PART1
+    print("Test(s) for part 1 succeeded!")
 
     input_lines = read_input()
-    print(part1(input_lines))
+    print("Part 1 answer:", part1(input_lines))
 
     assert part2(test_lines) == TEST_ANSWER_PART2
-    print(part2(input_lines))
+    print("Test(s) for part 2 succeeded!")
+    print("Part 2 answer:", part2(input_lines))
