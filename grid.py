@@ -13,6 +13,14 @@ class Grid2D(UserDict[tuple[int, int], str]):
     """An Advent of Code favorite. Indexed by (x, y) from top left."""
 
     @classmethod
+    def empty(cls, xsize: int, ysize: int) -> Self:
+        return cls({
+            (i, j): "."
+            for i in range(xsize)
+            for j in range(ysize)
+        })
+
+    @classmethod
     def from_lines(cls, lines: list[str]) -> Self:
         return cls({
             (i, j): lines[j][i]
