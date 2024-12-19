@@ -3,7 +3,8 @@ from functools import cache
 from utils import read_input, generate_sections
 
 TEST_ANSWER_PART1 = 6
-TEST_ANSWER_PART2 = ...
+TEST_ANSWER_PART2 = 16
+
 
 @cache
 def count_matches(design: str, patterns: frozenset[str]) -> int:
@@ -13,19 +14,28 @@ def count_matches(design: str, patterns: frozenset[str]) -> int:
         return 0
 
     for mp in matching_patterns:
-        remainder = design.lstrip(mp)
-        if not remainder:
+        if mp == design:
             match_count += 1
             continue
 
-        remainder_match_count = count_matches(remainder, patterns)
-        match_count += remainder_match_count
-
-        # remainder_matches = count_matches(remainder, patterns)
-        # for rm in remainder_matches:
-        #     matches.append([mp] + rm)
+        remainder = design[len(mp):]
+        match_count += count_matches(remainder, patterns)
 
     return match_count
+
+
+@cache
+def can_match(design: str, patterns: frozenset[str]) -> bool:
+    matching_patterns = [pat for pat in patterns if design.startswith(pat)]
+    for mp in matching_patterns:
+        if mp == design:
+            return True
+
+        remainder = design[len(mp):]
+        if can_match(remainder, patterns):
+            return True
+
+    return False
 
 
 def part1(lines: list[str]) -> int:
@@ -33,18 +43,19 @@ def part1(lines: list[str]) -> int:
     patterns = frozenset(sections[0][0].split(", "))  # set is not hashable so cannot be cached
     designs = sections[1]
 
-    count = 0
-    for design in designs:
-        matches = count_matches(design, patterns)
-        # print(matches)
-        if matches:
-            count += 1
+    count = len(list(d for d in designs if can_match(d, patterns)))
 
     return count
 
 
 def part2(lines: list[str]) -> int:
-    ...
+    sections = list(generate_sections(lines))
+    patterns = frozenset(sections[0][0].split(", "))  # set is not hashable so cannot be cached
+    designs = sections[1]
+
+    count = sum(count_matches(d, patterns) for d in designs)
+
+    return count
 
 
 if __name__ == "__main__":
