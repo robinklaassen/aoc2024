@@ -4,8 +4,8 @@ from directions import StraightDirection, translate_position, REVERSE_DIRECTION
 from grid import Grid2D, Position
 from utils import read_input
 
-TEST_ANSWER_PART1 = ...
-TEST_ANSWER_PART2 = ...
+TEST_ANSWER_PART1 = 5
+TEST_ANSWER_PART2 = 41
 
 
 class RaceGrid(Grid2D):
@@ -29,18 +29,12 @@ class RaceGrid(Grid2D):
         return graph
 
 
-def part1(lines: list[str]) -> int:
-    # takes around a minute, not viable for part 2
+def part1(lines: list[str], min_time_saved: int) -> int:
     grid = RaceGrid.from_lines(lines)
     start = grid.get_positions("S")[0]
     end = grid.get_positions("E")[0]
-    original_time = nx.shortest_path_length(grid.base_graph, start, end)
-    print("Normal time", original_time)
 
-    # new stuff here
     times = nx.shortest_path_length(grid.base_graph, source=None, target=end)
-    # print(times)
-    # this is great, for each point in the graph, check if pos 2 positions away exists and what the time diff is
     time_saved: list[int] = []
     for pos, normal_time in times.items():
         for d in StraightDirection:
@@ -49,56 +43,55 @@ def part1(lines: list[str]) -> int:
             if new_time is None:
                 continue  # wall, or out of bounds
 
-            if new_time >= normal_time:
+            if new_time >= normal_time - 2:
                 continue  # not a shortcut
 
-            time_saved.append(normal_time - new_time + 2)
+            time_saved.append(normal_time - new_time - 2)
 
-    print(sorted(time_saved))
-    return sum(1 for ts in time_saved if ts >= 100)
-
-    checked_positions: list[set[Position]] = []
-    graph = grid.base_graph
-    cheat_times: list[int] = []
-
-    for pos, char in grid.items():
-        x, y = pos
-        xsize, ysize = grid.size
-        if char != "#" or x == 0 or x == xsize - 1 or y == 0 or y == ysize - 1:
-            # only check walls not in the outer border
-            continue
-
-        for direction in StraightDirection:
-            new_pos = translate_position(pos, direction)
-            reversed_pos = translate_position(pos, REVERSE_DIRECTION[direction])
-            pos_set = {new_pos, reversed_pos}
-            if grid[new_pos] == "#" or grid[reversed_pos] == "#" or pos_set in checked_positions:
-                continue
-
-            graph.add_edge(new_pos, reversed_pos)
-            cheated_time = nx.shortest_path_length(graph, start, end)
-            cheat_times.append(cheated_time + 1)  # the cheated edge takes 2 seconds, not 1
-
-            checked_positions.append(pos_set)
-            graph.remove_edge(new_pos, reversed_pos)
-
-    time_saved = [original_time - cheat_time for cheat_time in cheat_times]
     # print(sorted(time_saved))
-    return sum(1 for ts in time_saved if ts >= 100)
+    return sum(1 for ts in time_saved if ts >= min_time_saved)
 
 
-def part2(lines: list[str]) -> int:
-    ...
+def part2(lines: list[str], min_time_saved: int) -> int:
+    grid = RaceGrid.from_lines(lines)
+    start = grid.get_positions("S")[0]
+    end = grid.get_positions("E")[0]
+
+    # make a list of possible diffs for 20 ps
+    diffs: list[Position] = []
+    for x in range(-20, 21):
+        for y in range(-20, 21):
+            if abs(x) + abs(y) > 20:
+                continue
+            diffs.append((x, y))
+
+    times = nx.shortest_path_length(grid.base_graph, source=None, target=end)
+    time_saved: list[int] = []
+    for pos, normal_time in times.items():
+        for diff in diffs:
+            jump_time = abs(diff[0]) + abs(diff[1])
+            new_pos = (pos[0] + diff[0], pos[1] + diff[1])
+            new_time = times.get(new_pos, None)
+            if new_time is None:
+                continue  # wall, or out of bounds
+
+            if new_time >= normal_time - jump_time:
+                continue  # not a shortcut
+
+            time_saved.append(normal_time - new_time - jump_time)
+
+    # print(sorted(time_saved))
+    return sum(1 for ts in time_saved if ts >= min_time_saved)
 
 
 if __name__ == "__main__":
     test_lines = read_input("test_input.txt")
-    assert part1(test_lines) == TEST_ANSWER_PART1
+    assert part1(test_lines, 20) == TEST_ANSWER_PART1
     print("Test(s) for part 1 succeeded!")
 
     input_lines = read_input()
-    print("Part 1 answer:", part1(input_lines))
+    print("Part 1 answer:", part1(input_lines, 100))
 
-    assert part2(test_lines) == TEST_ANSWER_PART2
+    assert part2(test_lines, 70) == TEST_ANSWER_PART2
     print("Test(s) for part 2 succeeded!")
-    print("Part 2 answer:", part2(input_lines))
+    print("Part 2 answer:", part2(input_lines, 100))
