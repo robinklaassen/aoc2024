@@ -34,8 +34,28 @@ def part1(lines: list[str]) -> int:
     grid = RaceGrid.from_lines(lines)
     start = grid.get_positions("S")[0]
     end = grid.get_positions("E")[0]
-    normal_time = nx.shortest_path_length(grid.base_graph, start, end)
-    print("Normal time", normal_time)
+    original_time = nx.shortest_path_length(grid.base_graph, start, end)
+    print("Normal time", original_time)
+
+    # new stuff here
+    times = nx.shortest_path_length(grid.base_graph, source=None, target=end)
+    # print(times)
+    # this is great, for each point in the graph, check if pos 2 positions away exists and what the time diff is
+    time_saved: list[int] = []
+    for pos, normal_time in times.items():
+        for d in StraightDirection:
+            new_pos = translate_position(pos, d, 2)
+            new_time = times.get(new_pos, None)
+            if new_time is None:
+                continue  # wall, or out of bounds
+
+            if new_time >= normal_time:
+                continue  # not a shortcut
+
+            time_saved.append(normal_time - new_time + 2)
+
+    print(sorted(time_saved))
+    return sum(1 for ts in time_saved if ts >= 100)
 
     checked_positions: list[set[Position]] = []
     graph = grid.base_graph
@@ -62,7 +82,7 @@ def part1(lines: list[str]) -> int:
             checked_positions.append(pos_set)
             graph.remove_edge(new_pos, reversed_pos)
 
-    time_saved = [normal_time - cheat_time for cheat_time in cheat_times]
+    time_saved = [original_time - cheat_time for cheat_time in cheat_times]
     # print(sorted(time_saved))
     return sum(1 for ts in time_saved if ts >= 100)
 
@@ -73,7 +93,7 @@ def part2(lines: list[str]) -> int:
 
 if __name__ == "__main__":
     test_lines = read_input("test_input.txt")
-    # assert part1(test_lines) == TEST_ANSWER_PART1
+    assert part1(test_lines) == TEST_ANSWER_PART1
     print("Test(s) for part 1 succeeded!")
 
     input_lines = read_input()
