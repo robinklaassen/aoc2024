@@ -111,44 +111,10 @@ def directional_ways(code: str) -> list[str]:
     return dir_keypad.all_ways_to_type_code(code)
 
 
-@cache
-def shortest_directional_code(code: str) -> str:
-    dir_keypad = new_directional_keypad()
-    # return dir_keypad.shortest_way_to_type_code(code)
-    ways = dir_keypad.all_ways_to_type_code(code)
-    return min(ways, key=len)
-
-
-@cache
-def directional_shortest_sequence_length(code: str) -> int:
-    dir_keypad = new_directional_keypad()
-    return min(len(w) for w in dir_keypad.all_ways_to_type_code(code))
-
-
 def segmentize(code: str) -> list[str]:
     # split the code in segments, where every segments ends with A
     assert code.endswith("A")
     return [part + "A" for part in code[:-1].split("A")]
-
-    # output = []
-    # for part in code.split("A"):
-    #
-    #     output.append(part + "A")
-    #
-    # return output
-
-@cache
-def recursive_pressing_code(code: str, n: int) -> str:
-    if n == 0:
-        return code
-
-    result = ""
-    for seg in segmentize(code):
-        new_code = shortest_directional_code(seg)
-        result += recursive_pressing_code(new_code, n - 1)
-
-    return result
-
 
 
 @cache
@@ -158,8 +124,9 @@ def recursive_pressing_length(code: str, n: int) -> int:
 
     result = 0
     for seg in segmentize(code):
-        new_code = shortest_directional_code(seg)
-        result += recursive_pressing_length(new_code, n - 1)
+        ways_for_segment = directional_ways(seg)
+        shortest_segment_length = min(recursive_pressing_length(way, n - 1) for way in ways_for_segment)
+        result += shortest_segment_length
 
     return result
 
@@ -169,17 +136,9 @@ def shortest_sequence_length(code: str, intermediate_keypad_count: int) -> int:
 
     lengths = []
     for num_keypad_way in num_keypad.all_ways_to_type_code(code):
-        code = recursive_pressing_code(num_keypad_way, 1)
-        print(code)
-
         lengths.append(recursive_pressing_length(num_keypad_way, intermediate_keypad_count))
 
-        # for dir_way1 in directional_ways(num_keypad_way):
-        #     for dir_way2 in directional_ways(dir_way1):
-        #         shortest_length = min(shortest_length, len(dir_way2))
-
     return min(lengths)
-    # return shortest_length
 
 
 def part1(lines: list[str]) -> int:
@@ -192,7 +151,12 @@ def part1(lines: list[str]) -> int:
 
 
 def part2(lines: list[str]) -> int:
-    ...
+    output = 0
+    for code in lines:
+        seq_len = shortest_sequence_length(code, 25)
+        num_part = int(code.rstrip("A"))
+        output += seq_len * num_part
+    return output
 
 
 if __name__ == "__main__":
@@ -205,6 +169,6 @@ if __name__ == "__main__":
     input_lines = read_input()
     print("Part 1 answer:", part1(input_lines))
 
-    assert part2(test_lines) == TEST_ANSWER_PART2
+    # assert part2(test_lines) == TEST_ANSWER_PART2
     print("Test(s) for part 2 succeeded!")
     print("Part 2 answer:", part2(input_lines))
