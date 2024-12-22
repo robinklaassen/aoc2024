@@ -3,7 +3,9 @@ from operator import itemgetter
 from pathlib import Path
 from typing import Self
 
-from directions import Direction, StraightDirection
+import networkx as nx
+
+from directions import Direction, StraightDirection, translate_position
 from utils import read_input
 
 type Position = tuple[int, int]
@@ -47,6 +49,20 @@ class Grid2D(UserDict[tuple[int, int], str]):
         for y in range(ysize):
             print("".join(self[x, y] for x in range(xsize)))
 
+    def build_graph(self) -> nx.Graph:
+        graph = nx.Graph()
+        for pos, char in self.items():
+            if char == "#":
+                continue
+
+            graph.add_node(pos)
+            for direction in StraightDirection:
+                neighbor = translate_position(pos, direction)
+                neighbor_char = self.get(neighbor, None)
+                if neighbor_char != "#":
+                    graph.add_edge(pos, neighbor)
+        return graph
+
     def concat_in_direction(self, x_start: int, y_start: int, length: int, direction: Direction) -> str:
         output = ""
         for s in range(length):
@@ -62,6 +78,7 @@ class Grid2D(UserDict[tuple[int, int], str]):
 
 if __name__ == "__main__":
     # some testing with the word search from day 4
+    # TODO this is just really specific to day 4, move it there
     input_lines = read_input(Path(__file__).parent / "day04" / "input.txt")
     grid = Grid2D.from_lines(input_lines)
     print(grid.size)
